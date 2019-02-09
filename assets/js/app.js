@@ -23,7 +23,7 @@ channel.join()
 // Setup buttons
 let localStream, peerConnection
 let localVideo = document.getElementById("localVideo")
-let remoteVideo = document.getElementById("removeVideo")
+let remoteVideo = document.getElementById("remoteVideo")
 let connectButton = document.getElementById("connect")
 let callButton = document.getElementById("call")
 let hangupButton = document.getElementById("hangup")
