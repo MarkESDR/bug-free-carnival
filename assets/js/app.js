@@ -30,13 +30,23 @@ let hangupButton = document.getElementById("hangup")
 
 hangupButton.disabled = true
 callButton.disabled = true
-connectButton.onClick = connect
-callButton.onClick = call
-hangupButton.onClick = hangup
+connectButton.onclick = connect
+callButton.onclick = call
+hangupButton.onclick = hangup
 
 function connect() {
   console.log("Requesting local stream")
-  navigator.getUserMedia({audio: true, video: true}, gotStream, error => {
-    console.log("getUserMedia error: ", error)
-  })
+  navigator.mediaDevices.getUserMedia({audio: true, video: true})
+    .then(gotStream)
+    .catch(error => console.log("getUserMedia error: ", error))
+}
+
+function gotStream(stream) {
+  console.log("Received local stream: ")
+  localVideo.srcObject = stream
+  localStream = stream
+  setupPeerConnection()
+}
+
+function setupPeerConnection() {
 }
