@@ -64,7 +64,9 @@ function setupPeerConnection() {
   console.log("Created local peer connection")
   peerConnection.onicecandidate = gotLocalIceCandidate
   peerConnection.ontrack = gotRemoteTrack
-  peerConnection.addStream(localStream)
+  localStream.getTracks().forEach(track => 
+    peerConnection.addTrack(track, localStream)
+  )
   console.log("Added localStream to localPeerConnection")
 }
 
@@ -84,13 +86,16 @@ function gotLocalDescription(description) {
       })})
     })
     .catch(handleError)
-  console.log("Offer from localPeerConnection: \n", description.sdp)
+  console.log("Offer from localPeerConnection: ", description)
 }
 
 function gotRemoteDescription(description) {
-  console.log("Answer from remotePeerConnection: \n", description.sdp)
-  peerConnection.setRemoteDescription(description)
-  peerConnection.createAnswer().then(gotLocalDescription).catch(handleError)
+  console.log("Answer from remotePeerConnection: ", description)
+  peerConnection.setRemoteDescription(description.sdp)
+    .then(() =>
+      peerConnection.createAnswer().then(gotLocalDescription)
+    )
+    .catch(handleError)
 }
 
 function gotRemoteTrack(event) {
