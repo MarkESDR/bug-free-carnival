@@ -49,4 +49,91 @@ function gotStream(stream) {
 }
 
 function setupPeerConnection() {
+  connectButton.disabled = true
+  callButton.disabled = false
+  hangupButton.disabled = false
+  console.log("Waiting for call")
+
+  let servers = {
+    iceServers: [{
+      url: "stun:stun.example.org"
+    }]
+  }
+
+  peerConnection = new RTCPeerConnection(servers)
+  console.log("Created local peer connection")
+  peerConnection.onicecandidate = gotLocalCandidate
+  peerConnection.onaddstream = gotRemoteStream
+  peerConnection.addStream(localStream)
+  console.log("Added localStream to localPeerConnection")
+}
+
+function call() {
+  callButton.disabled = true
+  console.log("Starting call")
+  peerConnection.createOffer()
+    .then(gotLocalDescription)
+    .catch(handleError)
+}
+
+function gotLocalDescription(description) {
+  peerConnection.setLocalDescription(description)
+    .then(() => {
+      channel.push("message", { body: JSON.stringify({
+        sdp: peerConnection.localDescription
+      })})
+    })
+    .catch(handleError)
+  console.log("Offer from localPeerConnection: \n", description.sdp)
+}
+
+function gotRemoteDescription(description) {
+  console.log("Answer from remotePeerConnection: \n", description.sdp)
+  peerConnection.setRemoteDescription(description)
+  peerConnection.createAnswer().then(gotLocalDescription).catch(handleError)
+}
+
+function gotRemoteStream(stream) {
+  remoteVideo.srcObject = stream
+  console.log("Received remote stream")
+}
+
+function gotLocalIceCandidate(event) {
+  if (event.candidate) {
+    console.log("Local ICE candidate: \n", event.candidate.candidate)
+    channel.push("message", {body: JSON.stringify({
+      candidate: event.candidate
+    })})
+  }
+}
+
+function gotRemoteIceCandidate(event) {
+  callButton.disabled = true
+  if (event.candidate) {
+    peerConnection.addIceCandidate(new RTCIceCandidate(event.candidate))
+    console.log("Remote ICE candidate: \n" + event.candidate.candidate)
+  }
+}
+
+channel.on("message", payload => {
+  let message = JSON.parse(payload.body)
+  if (message.sdp) {
+    gotRemoteDescription(message)
+  } else {
+    gotRemoteIceCandidate(message)
+  }
+})
+
+function hangup() {
+  console.log("Ending call")
+  peerConnection.close()
+  localVideo.srcObject = null
+  peerConnection = null
+  hangupButton.disabled = true
+  connectButton.disabled = false
+  callButton.disabled = true
+}
+
+function handleError(error) {
+  console.log(error.name + ": " + error.message)
 }
