@@ -56,14 +56,14 @@ function setupPeerConnection() {
 
   let servers = {
     iceServers: [{
-      url: "stun:stun.example.org"
+      urls: ["stun:stun.example.org"]
     }]
   }
 
   peerConnection = new RTCPeerConnection(servers)
   console.log("Created local peer connection")
-  peerConnection.onicecandidate = gotLocalCandidate
-  peerConnection.onaddstream = gotRemoteStream
+  peerConnection.onicecandidate = gotLocalIceCandidate
+  peerConnection.ontrack = gotRemoteTrack
   peerConnection.addStream(localStream)
   console.log("Added localStream to localPeerConnection")
 }
@@ -93,9 +93,9 @@ function gotRemoteDescription(description) {
   peerConnection.createAnswer().then(gotLocalDescription).catch(handleError)
 }
 
-function gotRemoteStream(stream) {
-  remoteVideo.srcObject = stream
-  console.log("Received remote stream")
+function gotRemoteTrack(event) {
+  remoteVideo.srcObject = event.streams[0]
+  console.log("Received remote stream: ", event)
 }
 
 function gotLocalIceCandidate(event) {
