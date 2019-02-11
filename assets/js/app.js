@@ -14,8 +14,11 @@ import "phoenix_html"
 // Import local files
 import socket from "./socket"
 
+let name = new Date().getTime()
+let users = []
+
 // Connect to call channel
-let channel = socket.channel("call", {})
+let channel = socket.channel("call", { name })
 channel.join()
   .receive("ok", () => console.log("Successfully joined call channel"))
   .receive("error", () => console.log("Unable to join"))
@@ -62,6 +65,22 @@ channel.on("message", payload => {
     gotRemoteDescription(message)
   } else {
     gotRemoteIceCandidate(message)
+  }
+})
+
+channel.on("new_user", payload => {
+  if (payload.name != name) {
+    console.log("New user: ", payload)
+    users.push(payload)
+    channel.push("prev_user", { name, target: payload.name })
+  }
+})
+
+channel.on("prev_user", payload => {
+  if (payload.target == name) {
+    let sender = { name: payload.name }
+    console.log("Prev user: ", sender)
+    users.push(sender)
   }
 })
 
