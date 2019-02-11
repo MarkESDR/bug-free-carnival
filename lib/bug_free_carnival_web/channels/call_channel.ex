@@ -11,8 +11,8 @@ defmodule BugFreeCarnivalWeb.CallChannel do
     {:noreply, socket}
   end
 
-  def handle_in("message", %{"body" => body}, socket) do
-    broadcast!(socket, "message", %{body: body})
+  def handle_in("message", message, socket) do
+    broadcast!(socket, "message", message)
     {:noreply, socket}
   end
 

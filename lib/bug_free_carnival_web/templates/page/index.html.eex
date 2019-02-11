@@ -2,7 +2,9 @@
   <video id=localVideo autoplay></video>
   <video id=remoteVideo autoplay></video>
 
-  <button id=connect>Connect</button>
-  <button id=call>Call</button>
   <button id=hangup>Hangup</button>
+
+  <ul id=userlist>
+  </ul>
+
 </div>

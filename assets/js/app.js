@@ -24,17 +24,13 @@ channel.join()
   .receive("error", () => console.log("Unable to join"))
 
 // Setup buttons
+let target
 let localStream, peerConnection
 let localVideo = document.getElementById("localVideo")
 let remoteVideo = document.getElementById("remoteVideo")
-let connectButton = document.getElementById("connect")
-let callButton = document.getElementById("call")
 let hangupButton = document.getElementById("hangup")
 
 hangupButton.disabled = true
-callButton.disabled = true
-connectButton.onclick = connect
-callButton.onclick = call
 hangupButton.onclick = hangup
 
 let servers = {
@@ -43,20 +39,12 @@ let servers = {
   }]
 }
 
-function connect() {
-}
-
-function call() {
-}
-
 function hangup() {
   console.log("Ending call")
   peerConnection.close()
   localVideo.srcObject = null
   peerConnection = null
   hangupButton.disabled = true
-  connectButton.disabled = false
-  callButton.disabled = true
 }
 
 channel.on("message", payload => {
@@ -73,6 +61,7 @@ channel.on("new_user", payload => {
     console.log("New user: ", payload)
     users.push(payload)
     channel.push("prev_user", { name, target: payload.name })
+    updateUserList()
   }
 })
 
@@ -81,8 +70,28 @@ channel.on("prev_user", payload => {
     let sender = { name: payload.name }
     console.log("Prev user: ", sender)
     users.push(sender)
+    updateUserList()
   }
 })
+
+function updateUserList() {
+  let list = document.querySelector("ul#userlist")
+
+  while (list.firstChild) {
+    list.removeChild(list.firstChild)
+  }
+
+  users.forEach(user => {
+    let item = document.createElement("li")
+    let button = document.createElement("button")
+    button.innerText = "Call"
+
+    item.appendChild(document.createTextNode(user.name))
+    item.appendChild(button)
+
+    list.appendChild(item)
+  })
+}
 
 function handleError(error) {
   console.log(error.name + ": " + error.message)
