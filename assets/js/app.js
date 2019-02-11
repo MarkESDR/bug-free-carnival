@@ -14,17 +14,16 @@ import "phoenix_html"
 // Import local files
 import socket from "./socket"
 
-let name = new Date().getTime()
+let myName = new Date().getTime()
 let users = []
 
 // Connect to call channel
-let channel = socket.channel("call", { name })
+let channel = socket.channel("call", { name: myName })
 channel.join()
   .receive("ok", () => console.log("Successfully joined call channel"))
   .receive("error", () => console.log("Unable to join"))
 
 // Setup buttons
-let target
 let localStream, peerConnection
 let localVideo = document.getElementById("localVideo")
 let remoteVideo = document.getElementById("remoteVideo")
@@ -57,16 +56,16 @@ channel.on("message", payload => {
 })
 
 channel.on("new_user", payload => {
-  if (payload.name != name) {
+  if (payload.name != myName) {
     console.log("New user: ", payload)
     users.push(payload)
-    channel.push("prev_user", { name, target: payload.name })
+    channel.push("prev_user", { name: myName, target: payload.name })
     updateUserList()
   }
 })
 
 channel.on("prev_user", payload => {
-  if (payload.target == name) {
+  if (payload.target == myName) {
     let sender = { name: payload.name }
     console.log("Prev user: ", sender)
     users.push(sender)
@@ -85,12 +84,26 @@ function updateUserList() {
     let item = document.createElement("li")
     let button = document.createElement("button")
     button.innerText = "Call"
+    button.addEventListener("click", e => call(e, user.name), false)
 
     item.appendChild(document.createTextNode(user.name))
     item.appendChild(button)
 
     list.appendChild(item)
   })
+}
+
+function call(e, targetName) {
+  if (peerConnection) {
+    alert("Can't have more than one call man")
+    return
+  }
+
+  navigator.mediaDevices.getUserMedia({ audio: true, video: true })
+    .then(localStream => {
+      localVideo.srcObject = localStream
+    })
+    .catch(handleError)
 }
 
 function handleError(error) {
