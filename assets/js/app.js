@@ -24,6 +24,7 @@ channel.join()
   .receive("error", () => console.log("Unable to join"))
 
 // Setup buttons
+let targetName
 let localStream, peerConnection
 let localVideo = document.getElementById("localVideo")
 let remoteVideo = document.getElementById("remoteVideo")
@@ -84,7 +85,11 @@ function updateUserList() {
     let item = document.createElement("li")
     let button = document.createElement("button")
     button.innerText = "Call"
-    button.addEventListener("click", e => call(e, user.name), false)
+    let callback = e => {
+      targetName = user.name
+      call(e)
+    }
+    button.addEventListener("click", callback, false)
 
     item.appendChild(document.createTextNode(user.name))
     item.appendChild(button)
@@ -93,17 +98,35 @@ function updateUserList() {
   })
 }
 
-function call(e, targetName) {
+function call(e) {
   if (peerConnection) {
     alert("Can't have more than one call man")
     return
   }
 
+  console.log("Calling: ", targetName)
+  createPeerConnection()
+
   navigator.mediaDevices.getUserMedia({ audio: true, video: true })
     .then(localStream => {
       localVideo.srcObject = localStream
+      localStream.getTracks().forEach(track => 
+        peerConnection.addTrack(track, localStream)
+      )
     })
     .catch(handleError)
+}
+
+function createPeerConnection() {
+  peerConnection = new RTCPeerConnection(servers)
+
+  //peerConnection.onicecandidate = handleICECandidateEvent
+  //peerConnection.ontrack = handleTrackEvent
+  //peerConnection.onnegotiationneeded = handleNegotiationNeededEvent
+  //peerConnection.onremovetrack = handleRemoveTrackEvent
+  //peerConnection.oniceconnectionstatechange = handleICEConnectionStateChangeEvent
+  //peerConnection.onicegatheringstatechange = handleICEGatheringStateChangeEvent
+  //peerConnection.onsignalingstatechange = handleSignalingStateChangeEvent
 }
 
 function handleError(error) {
