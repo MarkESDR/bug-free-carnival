@@ -34,100 +34,17 @@ connectButton.onclick = connect
 callButton.onclick = call
 hangupButton.onclick = hangup
 
+let servers = {
+  iceServers: [{
+    urls: ["stun:stun.example.org"]
+  }]
+}
+
 function connect() {
-  console.log("Requesting local stream")
-  navigator.mediaDevices.getUserMedia({audio: true, video: true})
-    .then(gotStream)
-    .catch(error => console.log("getUserMedia error: ", error))
-}
-
-function gotStream(stream) {
-  console.log("Received local stream: ")
-  localVideo.srcObject = stream
-  localStream = stream
-  setupPeerConnection()
-}
-
-function setupPeerConnection() {
-  connectButton.disabled = true
-  callButton.disabled = false
-  hangupButton.disabled = false
-  console.log("Waiting for call")
-
-  let servers = {
-    iceServers: [{
-      urls: ["stun:stun.example.org"]
-    }]
-  }
-
-  peerConnection = new RTCPeerConnection(servers)
-  console.log("Created local peer connection")
-  peerConnection.onicecandidate = gotLocalIceCandidate
-  peerConnection.ontrack = gotRemoteTrack
-  localStream.getTracks().forEach(track => 
-    peerConnection.addTrack(track, localStream)
-  )
-  console.log("Added localStream to localPeerConnection")
 }
 
 function call() {
-  callButton.disabled = true
-  console.log("Starting call")
-  peerConnection.createOffer()
-    .then(gotLocalDescription)
-    .catch(handleError)
 }
-
-function gotLocalDescription(description) {
-  peerConnection.setLocalDescription(description)
-    .then(() => {
-      channel.push("message", { body: JSON.stringify({
-        sdp: peerConnection.localDescription
-      })})
-    })
-    .catch(handleError)
-  console.log("Offer from localPeerConnection: ", description)
-}
-
-function gotRemoteDescription(description) {
-  console.log("Answer from remotePeerConnection: ", description)
-  peerConnection.setRemoteDescription(description.sdp)
-    .then(() =>
-      peerConnection.createAnswer().then(gotLocalDescription)
-    )
-    .catch(handleError)
-}
-
-function gotRemoteTrack(event) {
-  remoteVideo.srcObject = event.streams[0]
-  console.log("Received remote stream: ", event)
-}
-
-function gotLocalIceCandidate(event) {
-  if (event.candidate) {
-    console.log("Local ICE candidate: \n", event.candidate.candidate)
-    channel.push("message", {body: JSON.stringify({
-      candidate: event.candidate
-    })})
-  }
-}
-
-function gotRemoteIceCandidate(event) {
-  callButton.disabled = true
-  if (event.candidate) {
-    peerConnection.addIceCandidate(new RTCIceCandidate(event.candidate))
-    console.log("Remote ICE candidate: \n" + event.candidate.candidate)
-  }
-}
-
-channel.on("message", payload => {
-  let message = JSON.parse(payload.body)
-  if (message.sdp) {
-    gotRemoteDescription(message)
-  } else {
-    gotRemoteIceCandidate(message)
-  }
-})
 
 function hangup() {
   console.log("Ending call")
@@ -138,6 +55,15 @@ function hangup() {
   connectButton.disabled = false
   callButton.disabled = true
 }
+
+channel.on("message", payload => {
+  let message = JSON.parse(payload.body)
+  if (message.sdp) {
+    gotRemoteDescription(message)
+  } else {
+    gotRemoteIceCandidate(message)
+  }
+})
 
 function handleError(error) {
   console.log(error.name + ": " + error.message)
