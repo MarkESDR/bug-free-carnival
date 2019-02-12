@@ -50,7 +50,7 @@ function hangup() {
 }
 
 channel.on("message", message => {
-  console.log("Received message: ", message)
+  console.log("Received message: " + message.type)
 
   switch(message.type) {
     case "video-offer":
@@ -239,9 +239,27 @@ function handleNewICECandidateMsg(msg) {
 // ICE state changes
 
 
-function handleICEConnectionStateChangeEvent() {}
-function handleICEGatheringStateChangeEvent() {}
-function handleSignalingStateChangeEvent() {}
+function handleICEConnectionStateChangeEvent(event) {
+  let state = peerConnection.iceConnectionState
+  console.log("ICE Connection State Change: " + state)
+  switch (state) {
+    case "closed":
+    case "failed":
+    case "disconnected":
+      closeVideoCall()
+      break
+    default:
+      break
+  }
+}
+
+function handleICEGatheringStateChangeEvent(event) {
+  console.log("ICE Gathering State Change: " + peerConnection.iceGatheringState)
+}
+
+function handleSignalingStateChangeEvent(event) {
+  console.log("Signaling State Change: " + peerConnection.signalingState)
+}
 
 
 // Close Video Call
