@@ -48,6 +48,7 @@ function hangup() {
 }
 
 channel.on("message", payload => {
+  console.log("Received message")
   let message = JSON.parse(payload.body)
   if (message.sdp) {
     gotRemoteDescription(message)
@@ -122,11 +123,27 @@ function createPeerConnection() {
 
   //peerConnection.onicecandidate = handleICECandidateEvent
   //peerConnection.ontrack = handleTrackEvent
-  //peerConnection.onnegotiationneeded = handleNegotiationNeededEvent
+  peerConnection.onnegotiationneeded = handleNegotiationNeededEvent
   //peerConnection.onremovetrack = handleRemoveTrackEvent
   //peerConnection.oniceconnectionstatechange = handleICEConnectionStateChangeEvent
   //peerConnection.onicegatheringstatechange = handleICEGatheringStateChangeEvent
   //peerConnection.onsignalingstatechange = handleSignalingStateChangeEvent
+}
+
+function handleNegotiationNeededEvent() {
+  peerConnection.createOffer()
+    .then(offer => {
+      return peerConnection.setLocalDescription(offer)
+    })
+    .then(() => {
+      channel.push("message", {
+        name: myName,
+        target: targetName,
+        type: "video-offer",
+        sdp: peerConnection.localDescription
+      })
+    })
+    .catch(handleError)
 }
 
 function handleError(error) {
