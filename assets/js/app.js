@@ -59,6 +59,9 @@ channel.on("message", message => {
     case "video-offer":
       handleVideoOfferMessage(message)
       break
+    case "video-answer":
+      handleVideoAnswerMessage(message)
+      break
     default:
       break
   }
@@ -129,7 +132,7 @@ function createPeerConnection() {
   peerConnection = new RTCPeerConnection(servers)
 
   //peerConnection.onicecandidate = handleICECandidateEvent
-  //peerConnection.ontrack = handleTrackEvent
+  peerConnection.ontrack = handleTrackEvent
   peerConnection.onnegotiationneeded = handleNegotiationNeededEvent
   //peerConnection.onremovetrack = handleRemoveTrackEvent
   //peerConnection.oniceconnectionstatechange = handleICEConnectionStateChangeEvent
@@ -179,6 +182,17 @@ function handleVideoOfferMessage(msg) {
       })
     })
     .catch(handleError)
+}
+
+function handleVideoAnswerMessage(msg) {
+  peerConnection.setRemoteDescription(msg.sdp)
+}
+
+function handleTrackEvent(event) {
+  console.log("Handling track event", event)
+  remoteVideo.srcObject = event.streams[0]
+  console.log(remoteVideo)
+  hangupButton.disabled = false
 }
 
 function handleError(error) {
