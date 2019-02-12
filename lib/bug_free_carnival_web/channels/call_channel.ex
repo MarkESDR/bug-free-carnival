@@ -30,4 +30,8 @@ defmodule BugFreeCarnivalWeb.CallChannel do
 
     {:noreply, socket}
   end
+
+  def terminate(reason, socket) do
+    broadcast(socket, "left_user", %{name: socket.assigns.name})
+  end
 end

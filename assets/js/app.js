@@ -85,6 +85,12 @@ channel.on("prev_user", payload => {
   }
 })
 
+channel.on("left_user", payload => {
+  console.log("User left: ", payload)
+  users = users.filter(user => user.name == payload.name)
+  updateUserList()
+})
+
 function updateUserList() {
   let list = document.querySelector("ul#userlist")
 
