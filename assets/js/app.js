@@ -33,10 +33,15 @@ let hangupButton = document.getElementById("hangup")
 hangupButton.disabled = true
 hangupButton.onclick = hangup
 
-let servers = {
+const servers = {
   iceServers: [{
     urls: ["stun:stun.example.org"]
   }]
+}
+
+const mediaConstraints = {
+  audio: true,
+  video: true
 }
 
 function hangup() {
@@ -47,13 +52,15 @@ function hangup() {
   hangupButton.disabled = true
 }
 
-channel.on("message", payload => {
-  console.log("Received message")
-  let message = JSON.parse(payload.body)
-  if (message.sdp) {
-    gotRemoteDescription(message)
-  } else {
-    gotRemoteIceCandidate(message)
+channel.on("message", message => {
+  console.log("Received message: ", message)
+
+  switch(message.type) {
+    case "video-offer":
+      handleVideoOfferMessage(message)
+      break
+    default:
+      break
   }
 })
 
@@ -108,7 +115,7 @@ function call(e) {
   console.log("Calling: ", targetName)
   createPeerConnection()
 
-  navigator.mediaDevices.getUserMedia({ audio: true, video: true })
+  navigator.mediaDevices.getUserMedia(mediaConstraints)
     .then(localStream => {
       localVideo.srcObject = localStream
       localStream.getTracks().forEach(track => 
@@ -140,6 +147,34 @@ function handleNegotiationNeededEvent() {
         name: myName,
         target: targetName,
         type: "video-offer",
+        sdp: peerConnection.localDescription
+      })
+    })
+    .catch(handleError)
+}
+
+function handleVideoOfferMessage(msg) {
+  targetName = msg.name
+
+  createPeerConnection()
+
+  peerConnection.setRemoteDescription(msg.sdp)
+    .then(() => navigator.mediaDevices.getUserMedia(mediaConstraints))
+    .then(stream => {
+      localStream = stream
+      localVideo.srcObject = localStream
+
+      localStream.getTracks().forEach(track => {
+        peerConnection.addTrack(track, localStream)
+      })
+    })
+    .then(() => peerConnection.createAnswer())
+    .then(answer => peerConnection.setLocalDescription(answer))
+    .then(() => {
+      channel.push("message", {
+        name: myName,
+        target: targetName,
+        type: "video-answer",
         sdp: peerConnection.localDescription
       })
     })
