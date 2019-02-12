@@ -135,9 +135,9 @@ function createPeerConnection() {
   peerConnection.ontrack = handleTrackEvent
   peerConnection.onnegotiationneeded = handleNegotiationNeededEvent
   peerConnection.onremovetrack = handleRemoveTrackEvent
-  //peerConnection.oniceconnectionstatechange = handleICEConnectionStateChangeEvent
-  //peerConnection.onicegatheringstatechange = handleICEGatheringStateChangeEvent
-  //peerConnection.onsignalingstatechange = handleSignalingStateChangeEvent
+  peerConnection.oniceconnectionstatechange = handleICEConnectionStateChangeEvent
+  peerConnection.onicegatheringstatechange = handleICEGatheringStateChangeEvent
+  peerConnection.onsignalingstatechange = handleSignalingStateChangeEvent
 }
 
 
@@ -230,12 +230,16 @@ function handleNewICECandidateMsg(msg) {
 }
 
 
-function handleError(error) {
-  console.log(error.name + ": " + error.message)
-}
+// ICE state changes
+
+
+function handleICEConnectionStateChangeEvent() {}
+function handleICEGatheringStateChangeEvent() {}
+function handleSignalingStateChangeEvent() {}
 
 
 // Close Video Call
+
 
 function closeVideoCall() {
   if (peerConnection) {
@@ -267,4 +271,12 @@ function closeVideoCall() {
 
   hangupButton.disabled = true
   targetName = null
+}
+
+
+// Error handler
+
+
+function handleError(error) {
+  console.log(error.name + ": " + error.message)
 }
