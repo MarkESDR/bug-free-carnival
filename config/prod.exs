@@ -17,6 +17,13 @@ config :bug_free_carnival, BugFreeCarnivalWeb.Endpoint,
 # Do not print debug messages in production
 config :logger, level: :info
 
+# Configure your database
+config :bug_free_carnival, BugFreeCarnival.Repo,
+  username: "postgres",
+  password: "postgres",
+  database: "bug_free_carnival_prod",
+  pool_size: 15
+
 # ## SSL Support
 #
 # To get SSL working, you will need to add the `https` key
