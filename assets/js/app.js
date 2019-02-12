@@ -15,7 +15,7 @@ import "phoenix_html"
 import socket from "./socket"
 
 let myName = new Date().getTime()
-let users = []
+let users = new Map()
 
 // Connect to call channel
 let channel = socket.channel("call", { name: myName })
@@ -70,7 +70,7 @@ channel.on("message", message => {
 channel.on("new_user", payload => {
   if (payload.name != myName) {
     console.log("New user: ", payload)
-    users.push(payload)
+    users.set(payload.name, payload)
     channel.push("prev_user", { name: myName, target: payload.name })
     updateUserList()
   }
@@ -80,14 +80,14 @@ channel.on("prev_user", payload => {
   if (payload.target == myName) {
     let sender = { name: payload.name }
     console.log("Prev user: ", sender)
-    users.push(sender)
+    users.set(sender.name, sender)
     updateUserList()
   }
 })
 
 channel.on("left_user", payload => {
   console.log("User left: ", payload)
-  users = users.filter(user => user.name == payload.name)
+  users.delete(payload.name)
   updateUserList()
 })
 
