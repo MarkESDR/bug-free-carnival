@@ -45,11 +45,8 @@ const mediaConstraints = {
 }
 
 function hangup() {
-  console.log("Ending call")
-  peerConnection.close()
-  localVideo.srcObject = null
-  peerConnection = null
-  hangupButton.disabled = true
+  console.log("Hanging up")
+  closeVideoCall()
 }
 
 channel.on("message", message => {
@@ -137,11 +134,15 @@ function createPeerConnection() {
   peerConnection.onicecandidate = handleICECandidateEvent
   peerConnection.ontrack = handleTrackEvent
   peerConnection.onnegotiationneeded = handleNegotiationNeededEvent
-  //peerConnection.onremovetrack = handleRemoveTrackEvent
+  peerConnection.onremovetrack = handleRemoveTrackEvent
   //peerConnection.oniceconnectionstatechange = handleICEConnectionStateChangeEvent
   //peerConnection.onicegatheringstatechange = handleICEGatheringStateChangeEvent
   //peerConnection.onsignalingstatechange = handleSignalingStateChangeEvent
 }
+
+
+// Local-Remote handshake
+
 
 function handleNegotiationNeededEvent() {
   peerConnection.createOffer()
@@ -191,6 +192,27 @@ function handleVideoAnswerMessage(msg) {
   peerConnection.setRemoteDescription(msg.sdp)
 }
 
+
+// Stream Handling
+
+
+function handleTrackEvent(event) {
+  remoteVideo.srcObject = event.streams[0]
+  hangupButton.disabled = false
+}
+
+function handleRemoveTrackEvent(event) {
+  let stream = remoteVideo.srcObject
+
+  if (stream.getTracks().length = 0) {
+    closeVideoCall()
+  }
+}
+
+
+// ICE candidates
+
+
 function handleICECandidateEvent(event) {
   if (event.candidate) {
     channel.push("message", {
@@ -207,13 +229,42 @@ function handleNewICECandidateMsg(msg) {
     .catch(handleError)
 }
 
-function handleTrackEvent(event) {
-  console.log("Handling track event", event)
-  remoteVideo.srcObject = event.streams[0]
-  console.log(remoteVideo)
-  hangupButton.disabled = false
-}
 
 function handleError(error) {
   console.log(error.name + ": " + error.message)
+}
+
+
+// Close Video Call
+
+function closeVideoCall() {
+  if (peerConnection) {
+    peerConnection.ontrack = null
+    peerConnection.onremovetrack = null
+    peerConnection.onremovestream = null
+    peerConnection.onicecandidate = null
+    peerConnection.oniceconnectionstatechange = null
+    peerConnection.onsignalingstatechange = null
+    peerConnection.onicegatheringstatechange = null
+    peerConnection.onnegotiationneeded = null
+
+    if (remoteVideo.srcObject) {
+      remoteVideo.srcObject.getTracks().forEach(track => track.stop())
+    }
+
+    if (localVideo.srcObject) {
+      localVideo.srcObject.getTracks().forEach(track => track.stop())
+    }
+
+    peerConnection.close()
+    peerConnection = null
+  }
+
+  remoteVideo.removeAttribute("src")
+  remoteVideo.removeAttribute("srcObject")
+  localVideo.removeAttribute("src")
+  localVideo.removeAttribute("srcObject")
+
+  hangupButton.disabled = true
+  targetName = null
 }
