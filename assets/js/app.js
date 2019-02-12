@@ -62,6 +62,9 @@ channel.on("message", message => {
     case "video-answer":
       handleVideoAnswerMessage(message)
       break
+    case "new-ice-candidate":
+      handleNewICECandidateMsg(message)
+      break
     default:
       break
   }
@@ -131,7 +134,7 @@ function call(e) {
 function createPeerConnection() {
   peerConnection = new RTCPeerConnection(servers)
 
-  //peerConnection.onicecandidate = handleICECandidateEvent
+  peerConnection.onicecandidate = handleICECandidateEvent
   peerConnection.ontrack = handleTrackEvent
   peerConnection.onnegotiationneeded = handleNegotiationNeededEvent
   //peerConnection.onremovetrack = handleRemoveTrackEvent
@@ -186,6 +189,22 @@ function handleVideoOfferMessage(msg) {
 
 function handleVideoAnswerMessage(msg) {
   peerConnection.setRemoteDescription(msg.sdp)
+}
+
+function handleICECandidateEvent(event) {
+  if (event.candidate) {
+    channel.push("message", {
+      name: myName,
+      target: targetName,
+      type: "new-ice-candidate",
+      candidate: event.candidate
+    })
+  }
+}
+
+function handleNewICECandidateMsg(msg) {
+  peerConnection.addIceCandidate(msg.candidate)
+    .catch(handleError)
 }
 
 function handleTrackEvent(event) {
