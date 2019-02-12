@@ -33,11 +33,14 @@ let hangupButton = document.getElementById("hangup")
 hangupButton.disabled = true
 hangupButton.onclick = hangup
 
-const servers = {
+let servers = {
   iceServers: [{
-    urls: ["stun:stun.example.org"]
+    //urls: ["stun:stun.example.org"]
+    urls: ["stun:127.0.0.1:3479"]
   }]
 }
+
+servers = { iceServers: [] }
 
 const mediaConstraints = {
   audio: true,
@@ -220,6 +223,7 @@ function handleRemoveTrackEvent(event) {
 
 
 function handleICECandidateEvent(event) {
+  console.log("ICECandidate: ", event)
   if (event.candidate) {
     channel.push("message", {
       name: myName,
