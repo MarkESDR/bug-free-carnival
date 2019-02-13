@@ -12,17 +12,19 @@ use Mix.Config
 config :bug_free_carnival, BugFreeCarnivalWeb.Endpoint,
   http: [:inet6, port: System.get_env("PORT") || 4000],
   url: [host: "example.com", port: 80],
-  cache_static_manifest: "priv/static/cache_manifest.json"
+  cache_static_manifest: "priv/static/cache_manifest.json",
+  server: true,
+  secret_key_base: {:system, "SECRET_KEY_BASE"}
 
 # Do not print debug messages in production
 config :logger, level: :info
 
 # Configure your database
 config :bug_free_carnival, BugFreeCarnival.Repo,
-  username: "postgres",
-  password: "postgres",
-  database: "bug_free_carnival_prod",
-  pool_size: 15
+  url: {:system, "DATABASE_URL"},
+  database: "",
+  ssl: true,
+  pool_size: 1
 
 # ## SSL Support
 #
